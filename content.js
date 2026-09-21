@@ -80,6 +80,20 @@ function isMergeButton(el) {
   return MERGE_TEXT.test(label) ? btn : null;
 }
 
+// --- Merge button styling ---------------------------------------------------
+// Class names are matched in JS, not CSS: GitHub's Primer React markup has no
+// stable class on the merge button, so the only durable handle is its text.
+const BLOCKED_CLASS = 'merge-window-blocked';
+
+function paintMergeButtons() {
+  const frozen = inFreezeWindow();
+  // textContent, not innerText: innerText forces a reflow on every button.
+  for (const btn of document.querySelectorAll('button, [role="button"]')) {
+    const match = frozen && MERGE_TEXT.test((btn.textContent || '').trim());
+    btn.classList.toggle(BLOCKED_CLASS, match);
+  }
+}
+
 // --- Banner -----------------------------------------------------------------
 function renderBanner() {
   const existing = document.getElementById('merge-window-banner');
@@ -164,18 +178,26 @@ document.addEventListener(
 );
 
 // --- Lifecycle --------------------------------------------------------------
-function start() {
+function refresh() {
   renderBanner();
+  paintMergeButtons();
+}
+
+function start() {
+  refresh();
   // A 30s tick keeps the countdown current and flips the banner at the boundary.
   setInterval(renderBanner, 30_000);
+  // The merge button renders well after load and after every Turbo swap, so it
+  // needs a faster tick than the countdown does.
+  setInterval(paintMergeButtons, 2_000);
 
   // GitHub navigates with Turbo, which swaps <body> but leaves <html> alone, so the
   // banner survives. These events cover a restored bfcache page and Turbo renders.
   // Do NOT use a MutationObserver here: renderBanner writes to the DOM, so observing
   // the document would re-enter it on its own writes and hang the tab.
-  addEventListener('pageshow', renderBanner);
-  document.addEventListener('turbo:load', renderBanner);
-  document.addEventListener('turbo:render', renderBanner);
+  addEventListener('pageshow', refresh);
+  document.addEventListener('turbo:load', refresh);
+  document.addEventListener('turbo:render', refresh);
 }
 
 chrome.storage.sync.get(DEFAULTS, (stored) => {
@@ -189,5 +211,5 @@ chrome.storage.sync.get(DEFAULTS, (stored) => {
 
 chrome.storage.onChanged.addListener((changes) => {
   for (const [key, { newValue }] of Object.entries(changes)) config[key] = newValue;
-  renderBanner();
+  refresh();
 });

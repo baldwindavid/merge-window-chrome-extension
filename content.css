@@ -49,13 +49,19 @@ html.merge-window-frozen body {
   padding-top: 32px;
 }
 
-/* Tint any merge-ish button so the state is obvious without reading the banner. */
-html.merge-window-frozen .js-merge-commit-button,
-html.merge-window-frozen button[data-details-container=".js-merge-pr"],
-html.merge-window-frozen .btn-group-merge > .btn {
-  background: #8b2f00 !important;
-  border-color: #6e2500 !important;
+/* The class is applied from content.js, which matches the button by its text.
+   GitHub's own class names are generated and change without warning. */
+.merge-window-blocked,
+.merge-window-blocked:hover {
+  background: #a40e26 !important;
+  background-color: #a40e26 !important;
+  border-color: #8a0b20 !important;
   color: #fff !important;
+  box-shadow: none !important;
+}
+
+.merge-window-blocked:hover {
+  background-color: #8a0b20 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
