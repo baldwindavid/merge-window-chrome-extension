@@ -10,11 +10,15 @@ Default: **10am–4pm America/Chicago, Monday through Friday.**
 
 ## Install
 
+```
+git clone https://github.com/baldwindavid/merge-window-chrome-extension.git
+```
+
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode**, top right.
-3. Click **Load unpacked** and pick this folder.
+3. Click **Load unpacked** and pick the cloned folder.
 
-Chrome loads it from this path at every launch, so leave the folder where it is.
+Chrome loads it from that path at every launch, so leave the folder where it is.
 
 ## Configure
 
