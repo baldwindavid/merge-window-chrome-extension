@@ -20,7 +20,7 @@ Chrome loads it from this path at every launch, so leave the folder where it is.
 
 **Details → Extension options**, on the same `chrome://extensions` page.
 
-- **From / Until** — start hour is frozen, end hour is not. 10am–4pm means 4pm is clear.
+- **From / Until** — 10am–4pm blocks 10:00 through 3:59pm. At 4:00 you're clear.
 - **Timezone** — any IANA name. Follows daylight saving on its own.
 - **Days**
 - **Enforcement** — `Block` requires typing `MERGE`. `Warn` is a plain confirm dialog.
