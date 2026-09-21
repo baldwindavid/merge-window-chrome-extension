@@ -31,6 +31,7 @@ function nowInZone(tz) {
 }
 
 function inFreezeWindow() {
+  if (!onPullRequestPage()) return false;
   const { day, hour } = nowInZone(config.timezone);
   return config.days.includes(day) && hour >= config.startHour && hour < config.endHour;
 }
@@ -65,6 +66,16 @@ function configSignature() {
 function minutesUntilOpen() {
   const { hour, minute } = nowInZone(config.timezone);
   return (config.endHour - hour) * 60 - minute;
+}
+
+// --- Page scope -------------------------------------------------------------
+// Only pull request pages. The manifest still matches all of github.com because
+// GitHub navigates with Turbo: a narrower match would skip injection when you
+// click into a PR from a repo page, since that is a pushState, not a load.
+const PR_PATH = /^\/[^/]+\/[^/]+\/pull\/\d+/;
+
+function onPullRequestPage() {
+  return PR_PATH.test(location.pathname);
 }
 
 // --- Merge button detection -------------------------------------------------
@@ -196,8 +207,17 @@ function start() {
   // Do NOT use a MutationObserver here: renderBanner writes to the DOM, so observing
   // the document would re-enter it on its own writes and hang the tab.
   addEventListener('pageshow', refresh);
+  addEventListener('popstate', refresh);
   document.addEventListener('turbo:load', refresh);
   document.addEventListener('turbo:render', refresh);
+
+  // Backstop for pushState navigation that fires no event we can hear.
+  let lastPath = location.pathname;
+  setInterval(() => {
+    if (location.pathname === lastPath) return;
+    lastPath = location.pathname;
+    refresh();
+  }, 500);
 }
 
 chrome.storage.sync.get(DEFAULTS, (stored) => {

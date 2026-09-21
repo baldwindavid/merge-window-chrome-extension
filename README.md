@@ -2,9 +2,9 @@
 
 Chrome extension. Warns you before you merge a GitHub PR during hours you shouldn't.
 
-Inside the window it pins a banner to the bottom of github.com, turns the merge button
-red, and makes you type `MERGE` to get past a merge click. Outside the window it does
-nothing.
+On pull request pages inside the window, it pins a banner to the bottom, turns the
+merge button red, and makes you type `MERGE` to get past a merge click. Everywhere
+else, and outside the window, it does nothing.
 
 Default: **10am–4pm America/Chicago, Monday through Friday.**
 
