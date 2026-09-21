@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Merge Window</title>
+<style>
+  body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+         max-width: 34rem; margin: 3rem auto; padding: 0 1rem; color: #1f2328; }
+  h1 { font-size: 1.25rem; }
+  label { display: block; margin: 1rem 0 0.25rem; font-weight: 600; }
+  input, select { font: inherit; padding: 0.3rem 0.4rem; }
+  .row { display: flex; gap: 1rem; align-items: flex-end; }
+  .days label { font-weight: 400; display: inline-block; margin-right: 0.75rem; }
+  button { margin-top: 1.5rem; font: inherit; padding: 0.4rem 1rem; }
+  #saved { margin-left: 0.75rem; color: #1a7f37; visibility: hidden; }
+</style>
+</head>
+<body>
+<h1>Merge Window</h1>
+<p>Merging is discouraged <em>inside</em> the window below.</p>
+
+<div class="row">
+  <div>
+    <label for="startHour">From</label>
+    <select id="startHour"></select>
+  </div>
+  <div>
+    <label for="endHour">Until</label>
+    <select id="endHour"></select>
+  </div>
+  <div>
+    <label for="timezone">Timezone</label>
+    <input id="timezone" size="20">
+  </div>
+</div>
+
+<label>Days</label>
+<div class="days" id="days"></div>
+
+<label for="hardBlock">Enforcement</label>
+<select id="hardBlock">
+  <option value="true">Block: require typing MERGE to override</option>
+  <option value="false">Warn: a confirm dialog only</option>
+</select>
+
+<div><button id="save">Save</button><span id="saved">Saved</span></div>
+
+<script src="options.js"></script>
+</body>
+</html>

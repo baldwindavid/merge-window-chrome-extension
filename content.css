@@ -1,0 +1,59 @@
+#merge-window-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  font: 600 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: #fff;
+  background: #b35900;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+#merge-window-banner .mw-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffd33d;
+  animation: mw-pulse 2s ease-in-out infinite;
+}
+
+#merge-window-banner span:not(.mw-dot),
+#merge-window-banner strong {
+  font-weight: 400;
+}
+#merge-window-banner strong {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#merge-window-banner .mw-countdown {
+  margin-left: auto;
+  opacity: 0.85;
+}
+
+@keyframes mw-pulse {
+  50% { opacity: 0.25; }
+}
+
+/* Push the page down so the banner does not cover GitHub's own header. */
+html.merge-window-frozen body {
+  padding-top: 32px;
+}
+
+/* Tint any merge-ish button so the state is obvious without reading the banner. */
+html.merge-window-frozen .js-merge-commit-button,
+html.merge-window-frozen button[data-details-container=".js-merge-pr"],
+html.merge-window-frozen .btn-group-merge > .btn {
+  background: #8b2f00 !important;
+  border-color: #6e2500 !important;
+  color: #fff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #merge-window-banner .mw-dot { animation: none; }
+}

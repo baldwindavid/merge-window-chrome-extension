@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Merge Window",
+  "version": "1.0.0",
+  "description": "Warns and blocks GitHub merges during a configured freeze window.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://github.com/*"],
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_start"
+    }
+  ]
+}
