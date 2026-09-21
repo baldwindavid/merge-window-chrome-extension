@@ -25,9 +25,6 @@ Chrome loads it from this path at every launch, so leave the folder where it is.
 - **Days**
 - **Enforcement** — `Block` requires typing `MERGE`. `Warn` is a plain confirm dialog.
 
-On GitHub Enterprise, add your host to `host_permissions` and `matches` in
-`manifest.json`.
-
 ## This does not enforce anything
 
 It's a speed bump in your browser. It doesn't stop `gh pr merge`, the API, the mobile
