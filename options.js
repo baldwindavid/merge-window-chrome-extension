@@ -21,7 +21,7 @@ for (const id of ['startHour', 'endHour']) {
 }
 
 // --- Timezone dropdown ------------------------------------------------------
-const COMMON_ZONES = [
+const US_ZONES = [
   'America/New_York',
   'America/Chicago',
   'America/Denver',
@@ -45,20 +45,20 @@ function buildTimezoneMenu(selected) {
   const select = document.getElementById('timezone');
   select.textContent = '';
 
-  // Intl.supportedValuesOf needs Chrome 99+; fall back to the common list alone.
+  // Intl.supportedValuesOf needs Chrome 99+; fall back to the US list alone.
   const all = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
 
-  const common = document.createElement('optgroup');
-  common.label = 'Common';
-  for (const zone of COMMON_ZONES) {
+  const us = document.createElement('optgroup');
+  us.label = 'United States';
+  for (const zone of US_ZONES) {
     const abbr = zoneAbbreviation(zone);
-    common.appendChild(new Option(abbr ? `${zone} (${abbr})` : zone, zone));
+    us.appendChild(new Option(abbr ? `${zone} (${abbr})` : zone, zone));
   }
-  select.appendChild(common);
+  select.appendChild(us);
 
   if (all.length) {
     const rest = document.createElement('optgroup');
-    rest.label = 'All';
+    rest.label = 'All zones';
     for (const zone of all) rest.appendChild(new Option(zone, zone));
     select.appendChild(rest);
   }
