@@ -36,17 +36,4 @@ bind it to a merge queue and run it on `merge_group`. Or use
 [Merge Freeze](https://www.mergefreeze.com/), a paid app that does scheduled freezes
 server-side.
 
-## Editing it
-
-Three things that will bite you, all in `content.js`:
-
-- The merge button is matched on its **visible text** (`MERGE_TEXT`), not on classes or
-  data attributes, because GitHub churns that markup. Banner shows but clicks go
-  through? Fix that regex.
-- Clicks are cancelled in the **capture phase**. Setting `disabled` on the button
-  doesn't survive GitHub's next re-render.
-- **No MutationObserver.** `renderBanner` writes to the DOM, so observing the document
-  re-enters it on its own writes and freezes the tab. Navigation is handled by
-  `pageshow` and Turbo events.
-
 MIT.
