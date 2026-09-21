@@ -46,13 +46,26 @@ document.getElementById('save').addEventListener('click', () => {
     return;
   }
 
+  const startHour = Number(document.getElementById('startHour').value);
+  const endHour = Number(document.getElementById('endHour').value);
+  if (startHour >= endHour) {
+    alert('"From" must be earlier than "Until". Overnight windows are not supported.');
+    return;
+  }
+
+  const days = [...daysBox.querySelectorAll('input:checked')].map((b) => Number(b.value));
+  if (days.length === 0) {
+    alert('Pick at least one day, or the extension will never do anything.');
+    return;
+  }
+
   chrome.storage.sync.set(
     {
-      startHour: Number(document.getElementById('startHour').value),
-      endHour: Number(document.getElementById('endHour').value),
+      startHour,
+      endHour,
       timezone,
-      hardBlock: document.getElementById('hardBlock').value === 'true',
-      days: [...daysBox.querySelectorAll('input:checked')].map((b) => Number(b.value))
+      days,
+      hardBlock: document.getElementById('hardBlock').value === 'true'
     },
     () => {
       const saved = document.getElementById('saved');

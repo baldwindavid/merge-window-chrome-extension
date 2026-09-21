@@ -31,6 +31,10 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+#merge-window-banner .mw-window {
+  opacity: 0.95;
+}
+
 #merge-window-banner .mw-countdown {
   margin-left: auto;
   opacity: 0.85;

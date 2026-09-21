@@ -41,6 +41,27 @@ function fmtHour(h) {
   return `${display}${suffix}`;
 }
 
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+// e.g. "10am-4pm CDT, weekdays" - derived from config so it cannot go stale.
+function windowLabel() {
+  const zone =
+    new Intl.DateTimeFormat('en-US', { timeZone: config.timezone, timeZoneName: 'short' })
+      .formatToParts(new Date())
+      .find((p) => p.type === 'timeZoneName')?.value ?? config.timezone;
+
+  const days = [...config.days].sort((a, b) => a - b);
+  const weekdays = days.length === 5 && days.every((d, i) => d === i + 1);
+  const dayText = weekdays ? 'weekdays' : days.map((d) => DAY_NAMES[d - 1]).join(', ');
+
+  return `${fmtHour(config.startHour)}-${fmtHour(config.endHour)} ${zone}, ${dayText}`;
+}
+
+// Changes whenever a setting that appears in the banner changes.
+function configSignature() {
+  return [config.startHour, config.endHour, config.timezone, [...config.days].sort()].join('|');
+}
+
 function minutesUntilOpen() {
   const { hour, minute } = nowInZone(config.timezone);
   return (config.endHour - hour) * 60 - minute;
@@ -52,6 +73,7 @@ function minutesUntilOpen() {
 const MERGE_TEXT = /^(merge pull request|squash and merge|rebase and merge|confirm (merge|squash and merge|rebase and merge)|merge when ready|create a merge commit)/i;
 
 function isMergeButton(el) {
+  if (!(el instanceof Element)) return null;
   const btn = el.closest('button, [role="button"]');
   if (!btn) return null;
   const label = (btn.innerText || btn.textContent || '').trim();
@@ -69,22 +91,29 @@ function renderBanner() {
     existing?.remove();
     return;
   }
-  if (existing) {
+  const signature = configSignature();
+
+  if (existing && existing.dataset.signature === signature) {
     // Only write when the text actually changed: every write is a DOM mutation.
     const slot = existing.querySelector('.mw-countdown');
     const next = countdownText();
     if (slot.textContent !== next) slot.textContent = next;
     return;
   }
+  existing?.remove(); // Settings changed: rebuild rather than patch.
 
   const bar = document.createElement('div');
   bar.id = 'merge-window-banner';
+  bar.dataset.signature = signature;
   bar.innerHTML = `
     <span class="mw-dot"></span>
     <strong>Merge freeze</strong>
-    <span>${fmtHour(config.startHour)}&ndash;${fmtHour(config.endHour)} Central, weekdays.</span>
-    <span class="mw-countdown">${countdownText()}</span>
+    <span class="mw-window"></span>
+    <span class="mw-countdown"></span>
   `;
+  // textContent, not innerHTML: the timezone name comes from Intl, not from us.
+  bar.querySelector('.mw-window').textContent = `${windowLabel()}.`;
+  bar.querySelector('.mw-countdown').textContent = countdownText();
   document.documentElement.appendChild(bar);
 }
 
@@ -115,7 +144,7 @@ document.addEventListener(
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const window_ = `${fmtHour(config.startHour)}-${fmtHour(config.endHour)} Central`;
+    const window_ = windowLabel();
     if (config.hardBlock) {
       const answer = prompt(
         `Merge freeze is active (${window_}). ${countdownText()}\n\n` +
