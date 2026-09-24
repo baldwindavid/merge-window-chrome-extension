@@ -1,4 +1,4 @@
-// Merge Window: banner + click interception on GitHub merge buttons during a freeze window.
+// Merge Window: status banner + click interception on GitHub merge buttons during a freeze window.
 
 const DEFAULTS = {
   timezone: 'America/Chicago',
@@ -11,14 +11,14 @@ const DEFAULTS = {
 let config = DEFAULTS;
 
 // Current wall-clock day/hour/minute in the configured timezone, DST included.
-function nowInZone(tz) {
+function nowInZone(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: tz,
     weekday: 'short',
     hour: 'numeric',
     minute: 'numeric',
     hour12: false
-  }).formatToParts(new Date());
+  }).formatToParts(date);
 
   const get = (t) => parts.find((p) => p.type === t)?.value;
   const dayMap = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
@@ -30,10 +30,13 @@ function nowInZone(tz) {
   };
 }
 
-function inFreezeWindow() {
-  if (!onPullRequestPage()) return false;
-  const { day, hour } = nowInZone(config.timezone);
+function isFreezeAt(date) {
+  const { day, hour } = nowInZone(config.timezone, date);
   return config.days.includes(day) && hour >= config.startHour && hour < config.endHour;
+}
+
+function inFreezeWindow() {
+  return onPullRequestPage() && isFreezeAt(new Date());
 }
 
 function fmtHour(h) {
@@ -45,10 +48,10 @@ function fmtHour(h) {
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // e.g. "10am-4pm CDT, weekdays" - derived from config so it cannot go stale.
-function windowLabel() {
+function windowLabel(date = new Date()) {
   const zone =
     new Intl.DateTimeFormat('en-US', { timeZone: config.timezone, timeZoneName: 'short' })
-      .formatToParts(new Date())
+      .formatToParts(date)
       .find((p) => p.type === 'timeZoneName')?.value ?? config.timezone;
 
   const days = [...config.days].sort((a, b) => a - b);
@@ -66,6 +69,47 @@ function configSignature() {
 function minutesUntilOpen() {
   const { hour, minute } = nowInZone(config.timezone);
   return (config.endHour - hour) * 60 - minute;
+}
+
+// Find the next transition into a freeze in real time. Searching timestamps
+// rather than adding calendar days keeps the result correct across DST changes.
+function nextFreezeStart(now = new Date()) {
+  let previous = now.getTime();
+  // Two weeks also covers a one-hour weekly window skipped by spring DST.
+  for (let step = 1; step <= 15 * 24; step++) {
+    const current = previous + 60 * 60 * 1000;
+    if (isFreezeAt(new Date(current))) {
+      // The hourly probe found a freeze. Narrow its start to the minute.
+      let low = previous;
+      let high = current;
+      while (high - low > 60 * 1000) {
+        const middle = Math.floor((low + high) / (2 * 60 * 1000)) * 60 * 1000;
+        if (isFreezeAt(new Date(middle))) high = middle;
+        else low = middle;
+      }
+      return new Date(high);
+    }
+    previous = current;
+  }
+  return null;
+}
+
+function nextFreezeText(now = new Date()) {
+  const start = nextFreezeStart(now);
+  if (!start) return { window: 'No upcoming freeze scheduled.', countdown: '' };
+  const day = new Intl.DateTimeFormat('en-US', {
+    timeZone: config.timezone, weekday: 'short', month: 'short', day: 'numeric'
+  }).format(start);
+  const zone = new Intl.DateTimeFormat('en-US', {
+    timeZone: config.timezone, timeZoneName: 'short'
+  }).formatToParts(start).find((part) => part.type === 'timeZoneName')?.value ?? config.timezone;
+  const mins = Math.ceil((start.getTime() - now.getTime()) / 60_000);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return {
+    window: `Next freeze ${day}, ${fmtHour(nowInZone(config.timezone, start).hour)}-${fmtHour(config.endHour)} ${zone}.`,
+    countdown: `Starts in ${h ? h + 'h ' : ''}${m}m.`
+  };
 }
 
 // --- Page scope -------------------------------------------------------------
@@ -108,21 +152,25 @@ function paintMergeButtons() {
 // --- Banner -----------------------------------------------------------------
 function renderBanner() {
   const existing = document.getElementById('merge-window-banner');
-  const frozen = inFreezeWindow();
-
-  document.documentElement.classList.toggle('merge-window-frozen', frozen);
-
-  if (!frozen) {
+  if (!onPullRequestPage()) {
+    document.documentElement.classList.remove('merge-window-banner-visible');
     existing?.remove();
     return;
   }
-  const signature = configSignature();
+  const frozen = inFreezeWindow();
+
+  document.documentElement.classList.add('merge-window-banner-visible');
+  const signature = `${configSignature()}|${frozen}`;
+  const status = frozen
+    ? { window: `${windowLabel()}.`, countdown: countdownText() }
+    : nextFreezeText();
 
   if (existing && existing.dataset.signature === signature) {
     // Only write when the text actually changed: every write is a DOM mutation.
-    const slot = existing.querySelector('.mw-countdown');
-    const next = countdownText();
-    if (slot.textContent !== next) slot.textContent = next;
+    const windowSlot = existing.querySelector('.mw-window');
+    const countdownSlot = existing.querySelector('.mw-countdown');
+    if (windowSlot.textContent !== status.window) windowSlot.textContent = status.window;
+    if (countdownSlot.textContent !== status.countdown) countdownSlot.textContent = status.countdown;
     return;
   }
   existing?.remove(); // Settings changed: rebuild rather than patch.
@@ -130,15 +178,16 @@ function renderBanner() {
   const bar = document.createElement('div');
   bar.id = 'merge-window-banner';
   bar.dataset.signature = signature;
+  bar.dataset.state = frozen ? 'frozen' : 'open';
   bar.innerHTML = `
     <span class="mw-dot"></span>
-    <strong>Merge freeze</strong>
+    <strong>${frozen ? 'Merge freeze' : 'Merges open'}</strong>
     <span class="mw-window"></span>
     <span class="mw-countdown"></span>
   `;
   // textContent, not innerHTML: the timezone name comes from Intl, not from us.
-  bar.querySelector('.mw-window').textContent = `${windowLabel()}.`;
-  bar.querySelector('.mw-countdown').textContent = countdownText();
+  bar.querySelector('.mw-window').textContent = status.window;
+  bar.querySelector('.mw-countdown').textContent = status.countdown;
   document.documentElement.appendChild(bar);
 }
 

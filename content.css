@@ -16,12 +16,21 @@
   box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.3);
 }
 
+#merge-window-banner[data-state="open"] {
+  background: #1a7f37;
+}
+
 #merge-window-banner .mw-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #ffd33d;
   animation: mw-pulse 2s ease-in-out infinite;
+}
+
+#merge-window-banner[data-state="open"] .mw-dot {
+  background: #a6f3b8;
+  animation: none;
 }
 
 #merge-window-banner span:not(.mw-dot),
@@ -47,7 +56,7 @@
 }
 
 /* Keep the banner off the last of the page content. */
-html.merge-window-frozen body {
+html.merge-window-banner-visible body {
   padding-bottom: 32px;
 }
 
